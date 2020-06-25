@@ -1,93 +1,35 @@
-// Thanks to Fiber JWT https://github.com/gofiber/jwt
-
-package security
+package main
 
 import (
-	"errors"
-	"reflect"
-	"strings"
+	"fmt"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber"
+	"github.com/juandiii/go-jwk-security/jwt"
+	"github.com/juandiii/go-jwk-security/security"
 )
 
-type Config struct {
-	KeyFunc        jwt.Keyfunc
-	Claims         jwt.Claims
-	SuccessHandler func(c *fiber.Ctx)
-	ErrorHandler   func(c *fiber.Ctx, err error)
+type Server struct {
+	JwtKey *security.JwtKeys
 }
 
-// JwtMiddleware
-func JwtMiddleware(config ...Config) func(*fiber.Ctx) {
-	var cfg Config
-	headers := "header:" + fiber.HeaderAuthorization
-	authScheme := "Bearer"
+func main() {
+	server := &Server{JwtKey: &security.JwtKeys{JwtURL: "https://keycloak.juandiii.xyz/auth/realms/dev/protocol/openid-connect/certs"}}
+	err := server.JwtKey.GetKeys()
 
-	if len(config) > 0 {
-		cfg = config[0]
-	}
-
-	if cfg.SuccessHandler == nil {
-		cfg.SuccessHandler = func(c *fiber.Ctx) {
-			c.Next()
-		}
-	}
-
-	if cfg.ErrorHandler == nil {
-		cfg.ErrorHandler = func(c *fiber.Ctx, err error) {
-			if err.Error() == "Missing or malformed JWT" {
-				c.SendStatus(fiber.StatusBadRequest)
-				c.SendString("Missing or malformed JWT")
-			} else {
-				c.Status(fiber.StatusUnauthorized)
-				c.SendString("Invalid or expired JWT")
-			}
-		}
-	}
-
-	if cfg.KeyFunc == nil {
-		// cfg.KeyFunc = cfg.KeyFunc
-	}
-
-	parts := strings.Split(headers, ":")
-
-	t := jwtFromHeaders(parts[1], authScheme)
-
-	return func(c *fiber.Ctx) {
-		auth, err := t(c)
-		cfg.Claims = jwt.MapClaims{}
-
-		token := new(jwt.Token)
-
-		if _, ok := cfg.Claims.(jwt.MapClaims); ok {
-			token, err = jwt.Parse(auth, cfg.KeyFunc)
-		} else {
-			t := reflect.ValueOf(cfg.Claims).Type().Elem()
-			claims := reflect.New(t).Interface().(jwt.Claims)
-			token, err = jwt.ParseWithClaims(auth, claims, cfg.KeyFunc)
-		}
-
-		if err == nil && token.Valid {
-			c.Locals("user", token)
-			cfg.SuccessHandler(c)
-			return
-		}
-
-		cfg.ErrorHandler(c, err)
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
-}
 
-func jwtFromHeaders(header string, authScheme string) func(c *fiber.Ctx) (string, error) {
-	return func(c *fiber.Ctx) (string, error) {
-		auth := c.Get(header)
+	app := fiber.New()
 
-		l := len(authScheme)
-		if len(auth) > l+1 && auth[:l] == authScheme {
-			return auth[l+1:], nil
-		}
+	app.Use(jwt.JwtMiddleware(jwt.Config{
+		KeyFunc: server.JwtKey.GetKey,
+	}))
 
-		return "", errors.New("Missing or malformed JWT")
-	}
+	app.Get("/", func(c *fiber.Ctx) {
+		c.SendString("Entró klk")
+	})
+
+	app.Listen(3000)
 }
