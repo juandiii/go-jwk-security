@@ -46,8 +46,8 @@ func JwtMiddleware(config ...Config) func(*fiber.Ctx) {
 		}
 	}
 
-	if cfg.keyFunc == nil {
-		// cfg.keyFunc = cfg.keyFunc
+	if cfg.KeyFunc == nil {
+		// cfg.KeyFunc = cfg.KeyFunc
 	}
 
 	parts := strings.Split(headers, ":")
@@ -61,11 +61,11 @@ func JwtMiddleware(config ...Config) func(*fiber.Ctx) {
 		token := new(jwt.Token)
 
 		if _, ok := cfg.Claims.(jwt.MapClaims); ok {
-			token, err = jwt.Parse(auth, cfg.keyFunc)
+			token, err = jwt.Parse(auth, cfg.KeyFunc)
 		} else {
 			t := reflect.ValueOf(cfg.Claims).Type().Elem()
 			claims := reflect.New(t).Interface().(jwt.Claims)
-			token, err = jwt.ParseWithClaims(auth, claims, cfg.keyFunc)
+			token, err = jwt.ParseWithClaims(auth, claims, cfg.KeyFunc)
 		}
 
 		if err == nil && token.Valid {
