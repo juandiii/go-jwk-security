@@ -12,7 +12,7 @@ import (
 )
 
 type Config struct {
-	keyFunc        jwt.Keyfunc
+	KeyFunc        jwt.Keyfunc
 	Claims         jwt.Claims
 	SuccessHandler func(c *fiber.Ctx)
 	ErrorHandler   func(c *fiber.Ctx, err error)
