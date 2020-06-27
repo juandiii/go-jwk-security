@@ -13,7 +13,7 @@ type Server struct {
 }
 
 func main() {
-	server := &Server{JwtKey: &security.JwtKeys{JwtURL: "https://keycloak.juandiii.xyz/auth/realms/dev/protocol/openid-connect/certs"}}
+	server := &Server{JwtKey: &security.JwtKeys{JwtURL: "https://sso.example.net/realm/protocol/openid-connect/certs"}}
 	err := server.JwtKey.GetKeys()
 
 	if err != nil {
