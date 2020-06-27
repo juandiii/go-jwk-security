@@ -13,7 +13,7 @@ jwt.JwtMiddleware(config ...Config) func(*fiber.Ctx)
 ```
 
 ## 🆙 API
-TBT
+Coming soon!
 
 
 ## 🔽 Get Dependencies
