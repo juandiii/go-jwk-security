@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/gofiber/fiber"
+	"github.com/gofiber/fiber/v2"
 	"github.com/juandiii/go-jwk-security/jwt"
 	"github.com/juandiii/go-jwk-security/security"
 )
@@ -27,9 +27,9 @@ func main() {
 		KeyFunc: server.JwtKey.GetKey,
 	}))
 
-	app.Get("/", func(c *fiber.Ctx) {
-		c.SendString("Entró klk")
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Entró klk")
 	})
 
-	app.Listen(3000)
+	app.Listen(":3000")
 }

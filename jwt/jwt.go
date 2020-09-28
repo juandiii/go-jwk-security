@@ -8,18 +8,18 @@ import (
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/gofiber/fiber"
+	"github.com/gofiber/fiber/v2"
 )
 
 type Config struct {
 	KeyFunc        jwt.Keyfunc
 	Claims         jwt.Claims
-	SuccessHandler func(c *fiber.Ctx)
-	ErrorHandler   func(c *fiber.Ctx, err error)
+	SuccessHandler fiber.Handler
+	ErrorHandler   fiber.ErrorHandler
 }
 
 // JwtMiddleware
-func JwtMiddleware(config ...Config) func(*fiber.Ctx) {
+func JwtMiddleware(config ...Config) fiber.Handler {
 	var cfg Config
 	headers := "header:" + fiber.HeaderAuthorization
 	authScheme := "Bearer"
@@ -29,19 +29,17 @@ func JwtMiddleware(config ...Config) func(*fiber.Ctx) {
 	}
 
 	if cfg.SuccessHandler == nil {
-		cfg.SuccessHandler = func(c *fiber.Ctx) {
-			c.Next()
+		cfg.SuccessHandler = func(c *fiber.Ctx) error {
+			return c.Next()
 		}
 	}
 
 	if cfg.ErrorHandler == nil {
-		cfg.ErrorHandler = func(c *fiber.Ctx, err error) {
+		cfg.ErrorHandler = func(c *fiber.Ctx, err error) error {
 			if err.Error() == "Missing or malformed JWT" {
-				c.SendStatus(fiber.StatusBadRequest)
-				c.SendString("Missing or malformed JWT")
+				return c.Status(fiber.StatusBadRequest).SendString("Missing or malformed JWT")
 			} else {
-				c.Status(fiber.StatusUnauthorized)
-				c.SendString("Invalid or expired JWT")
+				return c.Status(fiber.StatusUnauthorized).SendString("Invalid or expired JWT")
 			}
 		}
 	}
@@ -54,7 +52,7 @@ func JwtMiddleware(config ...Config) func(*fiber.Ctx) {
 
 	t := jwtFromHeaders(parts[1], authScheme)
 
-	return func(c *fiber.Ctx) {
+	return func(c *fiber.Ctx) error {
 		auth, err := t(c)
 		cfg.Claims = jwt.MapClaims{}
 
@@ -70,12 +68,10 @@ func JwtMiddleware(config ...Config) func(*fiber.Ctx) {
 
 		if err == nil && token.Valid {
 			c.Locals("user", token)
-			cfg.SuccessHandler(c)
-			return
+			return cfg.SuccessHandler(c)
 		}
 
-		cfg.ErrorHandler(c, err)
-		return
+		return cfg.ErrorHandler(c, err)
 	}
 }
 
