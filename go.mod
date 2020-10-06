@@ -1,4 +1,4 @@
-module github.com/juandiii/go-jwk-security
+module github.com/juandiii/go-jwk-security/v2
 
 go 1.14
 
