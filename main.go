@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/juandiii/go-jwk-security/jwt"
-	"github.com/juandiii/go-jwk-security/security"
+	"github.com/juandiii/go-jwk-security/v2/jwt"
+	"github.com/juandiii/go-jwk-security/v2/security"
 )
 
 type Server struct {
